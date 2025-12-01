@@ -90,7 +90,6 @@
         .tab-content {
             display: none;
             flex: 1;
-            display: flex;
             flex-direction: column;
         }
 
@@ -308,9 +307,16 @@
         }
 
         .user-id {
-            font-size: 11px;
+            font-size: 10px;
             color: #999;
             word-break: break-all;
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 4px 6px;
+            border-radius: 4px;
+            margin-top: 4px;
+            cursor: pointer;
+            user-select: all;
         }
 
         .user-delete {
@@ -694,7 +700,7 @@
                             <img src="${user.imageUrl}" alt="${user.name}" class="user-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22%3E%3Crect fill=%22%23ccc%22 width=%2250%22 height=%2250%22/%3E%3C/svg%3E'">
                             <div class="user-info">
                                 <div class="user-name">${user.name}</div>
-                                <div class="user-id">ID: ${user.userId.substring(0, 12)}...</div>
+                                <div class="user-id" title="Click to copy" onclick="navigator.clipboard.writeText('${user.userId}').then(() => alert('User ID copied!'))">${user.userId}</div>
                             </div>
                             <button class="user-delete" onclick="deleteUser('${user.userId}')">Delete</button>
                         </div>
