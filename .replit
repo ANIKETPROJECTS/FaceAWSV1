@@ -1,0 +1,42 @@
+modules = ["nodejs-20"]
+[agent]
+expertMode = true
+
+[userenv]
+
+[userenv.shared]
+MONGODB_URI = "mongodb+srv://sairajkoyande_db_user:E81NT05Lhf1JcDMJ@faceverification.p10i66p.mongodb.net/?appName=FaceVerification"
+AWS_ACCESS_KEY_ID = "AKIA2RNIJOBTSSOBNE7C"
+AWS_REGION = "ap-south-1"
+AWS_S3_BUCKET = "faceauth-faces-724591800423"
+AWS_SECRET_ACCESS_KEY = "gZpcBEIRXzXTWtzINEcrw54TJqVxPKMDjT2fFz8p"
+REKOGNITION_COLLECTION_ID = "face-auth-collection"
+PORT = "5000"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Face Recognition API"
+
+[[workflows.workflow]]
+name = "Face Recognition API"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm start"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 5000
+externalPort = 80

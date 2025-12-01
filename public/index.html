@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Authentication</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 800px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 12px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .camera-feed {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+
+        #cameraVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .canvas-hidden {
+            display: none;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 3px solid #667eea;
+            border-radius: 16px;
+            pointer-events: none;
+        }
+
+        .result-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+            display: none;
+        }
+
+        .result-box.success {
+            display: block;
+            border-color: #4caf50;
+            background: #f1f8f4;
+        }
+
+        .result-box.error {
+            display: block;
+            border-color: #f44336;
+            background: #fef5f5;
+        }
+
+        .result-name {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .result-status {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .result-status.verified {
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        .result-status.failed {
+            color: #f44336;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .btn {
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e8e8e8;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .users-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .user-item {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #667eea;
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .user-id {
+            font-size: 11px;
+            color: #999;
+            word-break: break-all;
+        }
+
+        .user-delete {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .user-delete:hover {
+            background: #ff3838;
+        }
+
+        .status-text {
+            text-align: center;
+            font-size: 13px;
+            color: #999;
+            margin-top: 20px;
+        }
+
+        .similarity-score {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>Face Recognition</h1>
+            <p>Secure Authentication System</p>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('register', this)">Register</button>
+                <button class="tab-btn" onclick="switchTab('authenticate', this)">Authenticate</button>
+                <button class="tab-btn" onclick="switchTab('verify', this)">Verify</button>
+                <button class="tab-btn" onclick="switchTab('users', this)">Users</button>
+            </div>
+
+            <!-- Register Tab -->
+            <div id="register" class="tab-content active">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="regName" placeholder="Enter your name" required>
+                </div>
+
+                <div class="camera-feed">
+                    <video id="registerVideo" autoplay playsinline></video>
+                    <div class="camera-overlay"></div>
+                </div>
+                <canvas id="registerCanvas" class="canvas-hidden"></canvas>
+
+                <div class="camera-controls">
+                    <button class="btn btn-secondary" onclick="startCamera('register')">Start Camera</button>
+                    <button class="btn btn-primary" id="captureRegBtn" onclick="captureAndRegister()" style="display:none;">Capture & Register</button>
+                    <button class="btn btn-secondary" id="retakeRegBtn" onclick="resetCamera()" style="display:none;">Retake</button>
+                </div>
+
+                <div class="result-box" id="registerResult"></div>
+            </div>
+
+            <!-- Authenticate Tab -->
+            <div id="authenticate" class="tab-content">
+                <div class="camera-feed">
+                    <video id="authenticateVideo" autoplay playsinline></video>
+                    <div class="camera-overlay"></div>
+                </div>
+                <canvas id="authenticateCanvas" class="canvas-hidden"></canvas>
+
+                <div class="camera-controls">
+                    <button class="btn btn-primary" onclick="startAuthenticating()">Start Authentication</button>
+                </div>
+
+                <div class="result-box" id="authResult"></div>
+                <div class="status-text" id="authStatus"></div>
+            </div>
+
+            <!-- Verify Tab -->
+            <div id="verify" class="tab-content">
+                <div class="form-group">
+                    <label>User ID to Verify *</label>
+                    <input type="text" id="verifyUserId" placeholder="Paste user ID here">
+                </div>
+
+                <div class="camera-feed">
+                    <video id="verifyVideo" autoplay playsinline></video>
+                    <div class="camera-overlay"></div>
+                </div>
+                <canvas id="verifyCanvas" class="canvas-hidden"></canvas>
+
+                <div class="camera-controls">
+                    <button class="btn btn-primary" onclick="startVerifying()">Start Verification</button>
+                </div>
+
+                <div class="result-box" id="verifyResult"></div>
+                <div class="status-text" id="verifyStatus"></div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users" class="tab-content">
+                <div class="users-list" id="usersList"></div>
+                <div class="status-text" id="usersStatus"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/face';
+        let currentStream = null;
+        let currentTab = 'register';
+        let cameraActive = false;
+        let photoBlob = null;
+
+        async function switchTab(tab, btn) {
+            currentTab = tab;
+            stopCamera();
+            photoBlob = null;
+            
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tab).classList.add('active');
+            btn.classList.add('active');
+
+            if (tab === 'users') {
+                loadUsers();
+            } else if (tab === 'authenticate') {
+                const authStatus = document.getElementById('authStatus');
+                if (authStatus) authStatus.textContent = 'Ready to start';
+            } else if (tab === 'verify') {
+                const verifyStatus = document.getElementById('verifyStatus');
+                if (verifyStatus) verifyStatus.textContent = 'Ready to start';
+            }
+
+            resetUI();
+        }
+
+        async function startCamera(mode) {
+            try {
+                stopCamera();
+                const videoId = currentTab + 'Video';
+                const video = document.getElementById(videoId);
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+                });
+                
+                currentStream = stream;
+                video.srcObject = stream;
+                cameraActive = true;
+                
+                if (currentTab === 'register') {
+                    document.getElementById('captureRegBtn').style.display = 'inline-block';
+                    document.querySelector('#register .btn-secondary').style.display = 'none';
+                }
+            } catch (err) {
+                alert('Camera access denied: ' + err.message);
+            }
+        }
+
+        function resetCamera() {
+            photoBlob = null;
+            document.getElementById('captureRegBtn').style.display = 'inline-block';
+            document.getElementById('retakeRegBtn').style.display = 'none';
+            startCamera('register');
+        }
+
+        async function captureAndRegister() {
+            const name = document.getElementById('regName').value.trim();
+            if (!name) {
+                showResult('registerResult', 'Please enter your name', false);
+                return;
+            }
+
+            const video = document.getElementById('registerVideo');
+            const canvas = document.getElementById('registerCanvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            canvas.toBlob(async (blob) => {
+                photoBlob = blob;
+                document.getElementById('captureRegBtn').style.display = 'none';
+                document.getElementById('retakeRegBtn').style.display = 'inline-block';
+
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('image', blob, 'photo.jpg');
+
+                const btn = document.getElementById('captureRegBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading"></span>';
+
+                try {
+                    const res = await fetch(`${API_BASE}/register`, { method: 'POST', body: formData });
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        showResult('registerResult', `✓ Registered!\n${data.data.name}\nID: ${data.data.userId.substring(0, 8)}...`, true);
+                        stopCamera();
+                        setTimeout(() => document.getElementById('regName').value = '', 2000);
+                    } else {
+                        showResult('registerResult', `✗ ${data.error}`, false);
+                    }
+                } catch (err) {
+                    showResult('registerResult', `✗ Error: ${err.message}`, false);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Capture & Register';
+                }
+            }, 'image/jpeg', 0.9);
+        }
+
+        async function startAuthenticating() {
+            document.getElementById('authStatus').textContent = 'Starting camera...';
+            const video = document.getElementById('authenticateVideo');
+            
+            try {
+                stopCamera();
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+                });
+                currentStream = stream;
+                video.srcObject = stream;
+                cameraActive = true;
+
+                document.getElementById('authStatus').textContent = 'Recognizing face...';
+                recognizeInRealTime('auth');
+            } catch (err) {
+                document.getElementById('authStatus').textContent = 'Camera error: ' + err.message;
+            }
+        }
+
+        async function startVerifying() {
+            const userId = document.getElementById('verifyUserId').value.trim();
+            if (!userId) {
+                showResult('verifyResult', 'Please enter a user ID', false);
+                return;
+            }
+
+            document.getElementById('verifyStatus').textContent = 'Starting camera...';
+            const video = document.getElementById('verifyVideo');
+            
+            try {
+                stopCamera();
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+                });
+                currentStream = stream;
+                video.srcObject = stream;
+                cameraActive = true;
+
+                document.getElementById('verifyStatus').textContent = 'Verifying face...';
+                recognizeInRealTime('verify', userId);
+            } catch (err) {
+                document.getElementById('verifyStatus').textContent = 'Camera error: ' + err.message;
+            }
+        }
+
+        async function recognizeInRealTime(mode, userId = null) {
+            const videoId = (mode === 'auth' ? 'authenticate' : mode) + 'Video';
+            const canvasId = (mode === 'auth' ? 'authenticate' : mode) + 'Canvas';
+            const resultId = (mode === 'auth' ? 'auth' : mode) + 'Result';
+            const statusId = (mode === 'auth' ? 'auth' : mode) + 'Status';
+            
+            let lastRecognitionTime = Date.now();
+            
+            const interval = setInterval(async () => {
+                if (!cameraActive || !currentStream) {
+                    clearInterval(interval);
+                    return;
+                }
+
+                const video = document.getElementById(videoId);
+                const canvas = document.getElementById(canvasId);
+                
+                if (!video || !canvas || !video.videoWidth || !video.videoHeight) {
+                    return;
+                }
+                
+                try {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
+                    ctx.drawImage(video, 0, 0);
+
+                    canvas.toBlob(async (blob) => {
+                        if (!blob) return;
+                        
+                        try {
+                            const formData = new FormData();
+                            formData.append('image', blob, 'frame.jpg');
+
+                            let endpoint = `${API_BASE}/authenticate`;
+                            if (mode === 'verify') {
+                                endpoint = `${API_BASE}/verify/${userId}`;
+                            }
+
+                            const res = await fetch(endpoint, { method: 'POST', body: formData });
+                            const data = await res.json();
+
+                            if (data.success && ((mode === 'auth' && data.authenticated) || (mode === 'verify' && data.verified))) {
+                                stopCamera();
+                                clearInterval(interval);
+                                const resultBox = document.getElementById(resultId);
+                                if (resultBox) {
+                                    resultBox.innerHTML = `
+                                        <div class="result-name">${data.data.name}</div>
+                                        <div class="result-status verified">✓ ${mode === 'auth' ? 'Authenticated' : 'Verified'}</div>
+                                        <div class="similarity-score">Confidence: ${Math.round(data.data.similarity)}%</div>
+                                    `;
+                                    resultBox.classList.remove('error');
+                                    resultBox.classList.add('success');
+                                    resultBox.style.display = 'block';
+                                }
+                                const statusEl = document.getElementById(statusId);
+                                if (statusEl) statusEl.textContent = '';
+                            }
+                        } catch (err) {
+                            console.error('Recognition error:', err);
+                        }
+                    }, 'image/jpeg', 0.7);
+                } catch (err) {
+                    console.error('Canvas error:', err);
+                }
+            }, 500);
+
+            setTimeout(() => {
+                clearInterval(interval);
+                if (cameraActive) {
+                    document.getElementById(`${mode}Status`).textContent = 'No face recognized. Try again.';
+                }
+            }, 30000);
+        }
+
+        function stopCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            cameraActive = false;
+            const videos = ['registerVideo', 'authenticateVideo', 'verifyVideo'];
+            videos.forEach(id => {
+                const v = document.getElementById(id);
+                if (v) v.srcObject = null;
+            });
+        }
+
+        function resetUI() {
+            document.querySelectorAll('.result-box').forEach(el => {
+                el.style.display = 'none';
+                el.innerHTML = '';
+                el.classList.remove('success', 'error');
+            });
+            document.querySelectorAll('.status-text').forEach(el => el.textContent = '');
+        }
+
+        function showResult(elementId, message, isSuccess) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = `result-box ${isSuccess ? 'success' : 'error'}`;
+            el.style.display = 'block';
+        }
+
+        async function loadUsers() {
+            try {
+                const res = await fetch(`${API_BASE}/users`);
+                const data = await res.json();
+                const container = document.getElementById('usersList');
+
+                if (data.success && data.data.users.length > 0) {
+                    container.innerHTML = data.data.users.map(user => `
+                        <div class="user-item">
+                            <img src="${user.imageUrl}" alt="${user.name}" class="user-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22%3E%3Crect fill=%22%23ccc%22 width=%2250%22 height=%2250%22/%3E%3C/svg%3E'">
+                            <div class="user-info">
+                                <div class="user-name">${user.name}</div>
+                                <div class="user-id">ID: ${user.userId.substring(0, 12)}...</div>
+                            </div>
+                            <button class="user-delete" onclick="deleteUser('${user.userId}')">Delete</button>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="status-text">No registered users yet</div>';
+                }
+            } catch (err) {
+                document.getElementById('usersStatus').textContent = 'Error loading users: ' + err.message;
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('Delete this user?')) return;
+            try {
+                const res = await fetch(`${API_BASE}/users/${userId}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadUsers();
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>
